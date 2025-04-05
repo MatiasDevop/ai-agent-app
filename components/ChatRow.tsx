@@ -15,10 +15,6 @@ function ChatRow({
     router.push(`/dashboard/chat/${chat._id}`);
   };
 
-  //   const handleDelete = () => {
-  //     onDelete(chat._id);
-  //   };
-  //last parte 2:07
   return (
     <div
       className="group rounded-xl border border-gray-200/30 bg-white/50 backdrop-blur-sm hover:bg-white/80
