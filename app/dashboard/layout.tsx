@@ -15,9 +15,8 @@ export default function DashboardLayout({
       <div className="flex h-screen">
         <Authenticated>
           <Sidebar />
-          {/* <Sidebar /> */}
         </Authenticated>
-        <div className="bg-gray-200 flex-1">
+        <div className="flex-1">
           <Header />
           <main>{children}</main>
         </div>
