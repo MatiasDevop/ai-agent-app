@@ -1,6 +1,7 @@
 import { HuggingFaceInference } from "@langchain/community/llms/hf";
 import { InMemoryCache } from "@langchain/core/caches"; // Option 1: In-memory cache
-import { C } from "vitest/dist/chunks/reporters.d.CqBhtcTq.js";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import wxflows from "@wxflows/sdk/langchain";
 
 // here you can use any model you want
 // import { ChatOpenAI } from '@langchain/openai'
@@ -8,6 +9,16 @@ import { C } from "vitest/dist/chunks/reporters.d.CqBhtcTq.js";
 // import { ChatAzureOpenAI } from '@langchain/azure-openai'
 // import { ChatAnthropic } from '@langchain/anthropic'
 const cache = new InMemoryCache();
+
+// Connect to exflows
+const toolClient = new wxflows({
+  endpoint: process.env.WXFLOW_ENDPOINT || "",
+  apikey: process.env.WXFLOW_APIKEY ,
+});
+
+// Retrieve the tools from exflows
+const tools = await toolClient.lcTools;
+const toolNode = new ToolNode(tools);
 
 const initialiseModel = () => {
    console.log("Initialising Hugging Face model with caching...");   
