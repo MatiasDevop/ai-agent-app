@@ -8,6 +8,11 @@ import wxflows from "@wxflows/sdk/langchain";
 // import { ChatGooglePalm } from '@langchain/google-palm'
 // import { ChatAzureOpenAI } from '@langchain/azure-openai'
 // import { ChatAnthropic } from '@langchain/anthropic'
+
+//Customers at : https://introspection.apis.stepzen.com/customers
+// Comments at: https://dummyjson.com/comments
+
+
 const cache = new InMemoryCache();
 
 // Connect to exflows
@@ -51,6 +56,17 @@ const initialiseModel = () => {
           }
         }
       ]
-    }).bind();
+    }).bind(toolNode); // Bind the tool node to the model
+
     return model;
   };
+
+  const createWorkflow = async () => {
+    const model = initialiseModel();
+    const stateGraph = new StateGraph({
+      model,
+      toolNode,
+    });
+    const workflow = await toolClient.createWorkflow(stateGraph, tools);
+    return workflow;
+  }

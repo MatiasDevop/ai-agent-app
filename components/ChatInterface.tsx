@@ -4,6 +4,7 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { use, useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
+import { ChatRequestBody } from "@/lib/types";
 
 interface ChatInterfaceProps {
   chatId: Id<"chats">;
