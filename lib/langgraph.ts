@@ -3,6 +3,16 @@ import { InMemoryCache } from "@langchain/core/caches"; // Option 1: In-memory c
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import wxflows from "@wxflows/sdk/langchain";
 
+import { StateGraph,
+  END,
+  START,
+  MessagesAnnotation,
+  MemorySaver
+} from "@langchain/langgraph";
+import SYSTEM_MESSAGE from "@/constants/systemMessage";
+import { AIMessage, BaseMessage, SystemMessage, trimMessages} from "@langchain/core/messages";
+import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
+
 // here you can use any model you want
 // import { ChatOpenAI } from '@langchain/openai'
 // import { ChatGooglePalm } from '@langchain/google-palm'
@@ -12,6 +22,14 @@ import wxflows from "@wxflows/sdk/langchain";
 //Customers at : https://introspection.apis.stepzen.com/customers
 // Comments at: https://dummyjson.com/comments
 
+const trimmer = trimMessages({
+  maxTokens: 10,
+  strategy: "last",
+  tokenCounter: (msgs) => msgs.length,
+  includeSystem: true,
+  allowPartial: false,
+  startOn: "human"
+})
 
 const cache = new InMemoryCache();
 
@@ -60,13 +78,67 @@ const initialiseModel = () => {
 
     return model;
   };
+  // Define the function tha determines whether to continue or not
+  function shouldContinue(state: typeof MessagesAnnotation.State) {
+    const messages = state.messages;
+    const lastMessage = messages[messages.length - 1] as AIMessage;
 
+    // If the LLM makes a tool call, then we route to the  "tool" node
+    if(lastMessage.tool_calls?.length) {
+      return "tools";
+    }
+
+    // If the last message is a tool message, route back to the "agent" node
+    if(lastMessage.content
+      && lastMessage._getType() === "tool") {
+      return "agent";
+    }
+    
+    // Otherwise, we stop  (reply to the user)
+    return END;
+  }
+
+// Create a workflow using the model and tools
   const createWorkflow = async () => {
-    const model = initialiseModel();
-    const stateGraph = new StateGraph({
-      model,
-      toolNode,
-    });
-    const workflow = await toolClient.createWorkflow(stateGraph, tools);
-    return workflow;
+    const model = await initialiseModel();
+    const stateGraph = new StateGraph(
+      MessagesAnnotation,
+      { /* Add any necessary configuration options here */ }
+    ).addNode('agent', async (state) => {
+      // Create the system message content
+      const systemContent = SYSTEM_MESSAGE
+
+    // Create the prompt with the system message and messages placeholder
+    const promptTemplate = ChatPromptTemplate.fromMessages([
+     new SystemMessage(systemContent, {
+        cache_control:{ type: "ephemeral" },
+     }),
+      new MessagesPlaceholder("messages"),
+    ]);
+
+    // Trim the messages to manage conversation history 
+    const trimmedMessages = await trimmer.invoke(state.messages);
+    
+    // Format the prompt with the current messages
+    const prompt = await promptTemplate.invoke({
+      messages: trimmedMessages,});
+      
+      // Get a response from the model
+      const response = await model.invoke(prompt);
+      return { messages: response, };
+    })
+    .addEdge(START, "agent")
+    .addNode('tool', toolNode)
+    .addConditionalEdges("agent", shouldContinue)
+    .addEdge("tool", "agent");
+
+    return stateGraph;
+  };
+
+  export async function submitQuestion(messages: BaseMessage[], chatId: string) {
+    // Create the workflow
+    const workflow = await createWorkflow();
+    // Create checkpoint to save the state of the conversation
+    const checkpointer = new MemorySaver();
+    const app = workflow.compile({ checkpointer});
   }
