@@ -112,6 +112,9 @@ export async function POST(req: Request) {
                 output: event.data.output,
               });
             }
+
+            // Send completion message without storing the response
+            await sendSSEMessage(writer, { type: StreamMessageType.Done });
           }
 
         } catch (streamError) {
