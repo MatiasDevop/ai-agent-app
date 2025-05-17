@@ -24,7 +24,7 @@ import {
 } from "@langchain/core/prompts";
 
 // here you can use any model you want
-// import { ChatOpenAI } from '@langchain/openai'
+//import { ChatOpenAI } from '@langchain/openai'
 // import { ChatGooglePalm } from '@langchain/google-palm'
 // import { ChatAzureOpenAI } from '@langchain/azure-openai'
 // import { ChatAnthropic } from '@langchain/anthropic'
@@ -56,12 +56,12 @@ const toolNode = new ToolNode(tools);
 const initialiseModel = () => {
   console.log("Initialising Hugging Face model with caching...");
   const model = new HuggingFaceInference({
-    model: "meta-llama/Llama-3-8b", // Use LLaMA 3 (8B parameters)
+    model: "distilgpt2", // Use LLaMA 3 (8B parameters)
     apiKey: process.env.HUGGINGFACE_API_KEY, // Free Hugging Face API key
     temperature: 0.7, // Adjust the temperature for creativity
     maxTokens: 4096,
     // Add the cache instance here---
-    cache: cache,
+    //cache: cache,
     callbacks: [
       {
         handleLLMStart: async (token) => {
